@@ -146,8 +146,7 @@ export class MineScene extends Phaser.Scene {
   }
   const railTop=Math.max(128,top);g.fillStyle(0x293e35);g.fillRect(-7,railTop,5,Math.max(0,bottom-railTop));g.fillRect(WIDTH+2,railTop,5,Math.max(0,bottom-railTop));
   g.fillStyle(0x17191a);g.fillRect(0,r.rows*TILE,WIDTH,Math.max(0,bottom-r.rows*TILE));
-  if(r.mode!=='endless'){const exit=r.rows*TILE+36;g.fillStyle(0x74d8ae,.09);g.fillRect(0,exit-12,WIDTH,70);g.lineStyle(2,0x7ad7ac,.65);g.lineBetween(0,exit,WIDTH,exit);
-   for(let x=0;x<WIDTH;x+=32){g.fillStyle(0x7bd9ad,.5);g.fillRect(x+10,exit+14,12,3);}}
+
  }
  fx(e:RunEvent){
   const r=this.bridge.run(),tier=PICKS[r.pick].tier;

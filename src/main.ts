@@ -39,8 +39,7 @@ const nugget='<span class="nugget" aria-hidden="true"></span>';
 function pickIcon(key:Pick,size=''){return `<img class="pick-icon ${size}" src="${pickUrls[key]}" alt="" aria-hidden="true" draggable="false">`;}
 function save(force=false){
  syncAchievements(p,r);
- if(r.mode==='endless'){r.oreClaimed??=0;r.relics??=0;r.claimedRelics??=0;p.endlessAttempt=structuredClone(r);p.endlessAttempt.events=[];p.mode='endless';}
- else{p.attempt=structuredClone(r);p.attempt.events=[];p.mode='campaign';}
+ r.oreClaimed??=0;r.relics??=0;r.claimedRelics??=0;p.endlessAttempt=structuredClone(r);p.endlessAttempt.events=[];p.mode='endless';
  p.revision++;store.save(p);void store.flush(p,force);
 }
 function notify(text:string){const el=document.querySelector<HTMLElement>('#toast')!;el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}
@@ -52,7 +51,7 @@ function start(){if(r.status!=='ready'||screen!=='none'||platform.busy)return;au
 function render(){
  document.documentElement.lang=p.lang;document.title=p.lang==='ru'?'Шахта импульсов':'Shaft & Impulse';
  const playing=r.status==='playing',shell=document.querySelector<HTMLElement>('.game-shell')!;
- shell.classList.toggle('is-playing',playing);shell.dataset.gameMode=r.mode??'campaign';
+ shell.classList.toggle('is-playing',playing);shell.dataset.gameMode='endless';
  document.querySelector('#brand')!.innerHTML=`${svg('mountain')}<div><b>${t('title')}</b><small>${t('subtitle')}</small></div>`;
  document.querySelector('#wallet-label')!.textContent=t('wallet');
  document.querySelector('#sound')!.innerHTML=svg(p.sound?'sound':'mute');document.querySelector('#sound')!.setAttribute('aria-label',t('sound'));

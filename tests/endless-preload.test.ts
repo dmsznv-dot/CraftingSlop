@@ -12,3 +12,9 @@ test('an endless mine has generated blocks below its initial visible section bef
  run.status='playing';stepRun(run,1/120);
  assert.ok(run.rows*TILE>run.y+96*TILE);
 });
+
+test('all new runs use the endless mine regardless of legacy level argument',()=>{
+ const first=createRun(0,'wood','none',false,1234),legacyLevel=createRun(42,'wood','none',false,1234);
+ assert.equal(first.mode,'endless');assert.equal(legacyLevel.mode,'endless');
+ assert.deepEqual(legacyLevel.blocks,first.blocks);assert.equal(legacyLevel.rows,first.rows);
+});
