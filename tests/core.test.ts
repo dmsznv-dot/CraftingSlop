@@ -41,7 +41,7 @@ test('a blast reaches only the eight neighbours and dense rock survives it',()=>
 });
 test('each pick needs a different number of blows, and weak picks only chip ore and lose it',()=>{
  const blows=(pick:Pick,type:BlockType)=>Math.ceil(BLOCKS[type].hp/pickDamage(pick,type)-1e-9);
- assert.deepEqual((['wood','stone','iron','gold','diamond'] as Pick[]).map(p=>blows(p,'stone')),[3,2,2,1,1]);
+ assert.deepEqual((['wood','stone','iron','gold','diamond'] as Pick[]).map(p=>blows(p,'stone')),[4,2,2,1,1]);
  assert.deepEqual((['wood','stone','iron','gold','diamond'] as Pick[]).map(p=>blows(p,'hard')),[15,9,3,2,2]);
  assert.ok(blows('wood','gold')>blows('stone','gold')*3);
  const run=createRun(0,'wood');run.blocks=[{x:6,y:6,type:'gold',hp:.1}];

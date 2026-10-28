@@ -16,8 +16,8 @@ export const PICKS:Record<Pick,{nudges:number;hp:number;damage:number;tier:numbe
 // A pick below the tier only chips the block (UNDERTIER damage, if chip) and the broken ore crumbles to nothing.
 // Obsidian yields to a diamond pick only; bedrock never breaks. Neither is touched by TNT.
 export const BLOCKS:Record<BlockType,{hp:number;tier:number;wear:number;ore:number;chip:boolean;blastproof:boolean}>= {
- coal:{hp:1,tier:0,wear:.4,ore:1,chip:true,blastproof:false},
- copper:{hp:1.5,tier:0,wear:.45,ore:2,chip:true,blastproof:false},
+ coal:{hp:1.8,tier:0,wear:.4,ore:1,chip:true,blastproof:false},
+ copper:{hp:2.3,tier:0,wear:.45,ore:2,chip:true,blastproof:false},
  iron:{hp:2.5,tier:1,wear:.6,ore:4,chip:true,blastproof:false},
  emerald:{hp:5,tier:3,wear:.8,ore:16,chip:true,blastproof:false},
  ancient:{hp:8,tier:5,wear:1.05,ore:30,chip:true,blastproof:false},
@@ -33,8 +33,8 @@ export const BLOCKS:Record<BlockType,{hp:number;tier:number;wear:number;ore:numb
  curse:{hp:1,tier:0,wear:0,ore:0,chip:true,blastproof:false},
  shield:{hp:1,tier:0,wear:0,ore:0,chip:true,blastproof:false},coalCharge:{hp:1,tier:0,wear:0,ore:0,chip:true,blastproof:false},
  vein:{hp:1,tier:0,wear:0,ore:0,chip:true,blastproof:false},helmet:{hp:1,tier:0,wear:0,ore:0,chip:true,blastproof:false},
- dirt:{hp:1,tier:0,wear:.55,ore:0,chip:true,blastproof:false},
- stone:{hp:2.5,tier:0,wear:.8,ore:0,chip:true,blastproof:false},
+ dirt:{hp:1.8,tier:0,wear:.55,ore:0,chip:true,blastproof:false},
+ stone:{hp:3.2,tier:0,wear:.8,ore:0,chip:true,blastproof:false},
  gold:{hp:3,tier:1,wear:.65,ore:7,chip:true,blastproof:false},
  gem:{hp:4,tier:2,wear:.75,ore:11,chip:true,blastproof:false},
  hard:{hp:5,tier:2,wear:1.1,ore:0,chip:true,blastproof:false},
@@ -54,7 +54,7 @@ export interface RunCounters {tnt:number;bonuses:number;oreBlocks:number;helmetS
 export interface RunLedger {tnt:number;bonuses:number;oreBlocks:number;helmetSaves:number;ore:number;finished:boolean}
 export interface Run {
  achievementStats?:RunCounters;achievementLedger?:RunLedger;
- version:1;durabilityVersion?:4;id:string;level:number;pick:Pick;enchant:Enchant;rows:number;blocks:Block[];
+ version:1;durabilityVersion?:4;blockBalanceVersion?:1;id:string;level:number;pick:Pick;enchant:Enchant;rows:number;blocks:Block[];
  mode?:'campaign'|'endless';seed?:number;relics?:number;claimedRelics?:number;oreClaimed?:number;oneHitTime?:number;phaseTime?:number;magnetTime?:number;shieldTime?:number;helmetReady?:boolean;helmetCollected?:boolean;helmetGraceTime?:number;hpBonus?:number;benchUsed?:boolean;benchSpawned?:boolean;
  x:number;y:number;vx:number;vy:number;angle:number;spin:number;hp:number;nudges:number;
  ore:number;doubleLeft:number;time:number;lastNudge:number;lastHit:number;hits:number;status:'ready'|'playing'|'won'|'lost';
@@ -112,6 +112,7 @@ function addEndlessAction(type:BlockType,difficulty:number,rand:()=>number):Bloc
 }
 export function createRun(level:number,pick:Pick,enchant:Enchant='none',starter=false,seedOverride?:number):Run {
  const li=Math.max(0,Math.min(LEVELS.length-1,Math.floor(Number.isFinite(level)?level:0))),l=LEVELS[li],seed=seedOverride??l.seed,rand=random(seed),blocks:Block[]=[];
+ const startingHp=(type:BlockType)=>seedOverride===undefined?({dirt:1,coal:1,copper:1.5,stone:2.5} as Partial<Record<BlockType,number>>)[type]??BLOCKS[type].hp:BLOCKS[type].hp;
  for(let y=4;y<l.rows;y++){
   const segment=Math.floor((y-4)/4),route=l.route[segment%l.route.length];
   for(let x=0;x<COLS;x++){
@@ -137,10 +138,10 @@ export function createRun(level:number,pick:Pick,enchant:Enchant='none',starter=
     if(clear&&li>=OBSIDIAN_FROM&&type==='hard'&&rand()<.4)type='obsidian';
     if(clear&&li>=BEDROCK_FROM&&y>l.rows/2&&rand()<.08)type='bedrock';
    }
-   blocks.push({x,y,type,hp:BLOCKS[type].hp});
+   blocks.push({x,y,type,hp:startingHp(type)});
   }
  }
- const put=(x:number,y:number,type:BlockType)=>{if(y>=l.rows)return;const old=blocks.find(b=>b.x===x&&b.y===y);if(old){old.type=type;old.hp=BLOCKS[type].hp;}else blocks.push({x,y,type,hp:BLOCKS[type].hp});};
+ const put=(x:number,y:number,type:BlockType)=>{if(y>=l.rows)return;const old=blocks.find(b=>b.x===x&&b.y===y);if(old){old.type=type;old.hp=startingHp(type);}else blocks.push({x,y,type,hp:startingHp(type)});};
  // Guaranteed early income in the drop path, rather than decorative inaccessible gold.
  for(const x of [5,6,7,8]){put(x,5,'coal');put(x,10,'copper');}
  for(const [x,y] of FUSE)if(li>=2)put(x,y,'tnt');
@@ -151,8 +152,10 @@ export function createRun(level:number,pick:Pick,enchant:Enchant='none',starter=
   const bonusRand=random(seed^0x5eb2d91);
   for(const block of blocks){block.type=addEndlessAction(block.type,1,bonusRand);block.hp=BLOCKS[block.type].hp;}
  }
- return {version:1,durabilityVersion:4,id:crypto.randomUUID(),level:li,pick,enchant,rows:l.rows,blocks,x:224,y:64,vx:18,vy:0,angle:-.5,spin:3.8,
+ const run:Run={version:1,durabilityVersion:4,blockBalanceVersion:1,id:crypto.randomUUID(),level:li,pick,enchant,rows:l.rows,blocks,x:224,y:64,vx:18,vy:0,angle:-.5,spin:3.8,
   hp:PICKS[pick].hp,nudges:PICKS[pick].nudges,ore:0,doubleLeft:0,time:0,lastNudge:-10,lastHit:-10,hits:0,status:'ready',starter,starterPlaced:false,events:[],contacts:{},fuses:[],seed,mode:seedOverride===undefined?'campaign':'endless',relics:0,claimedRelics:0,oneHitTime:0,phaseTime:0};
+ if(run.mode==='endless')extendEndlessMine(run);
+ return run;
 }
 /** Extend an endless mine beneath the camera with a seeded, progressively richer and harder section. */
 export function extendEndlessMine(r:Run){
