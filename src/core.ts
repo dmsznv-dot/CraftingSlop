@@ -116,6 +116,8 @@ export function ensureSurface(r:Run){
  if(r.status!=='ready')return;
  const surface:Block[]=Array.from({length:COLS},(_,x)=>({x,y:4,type:'dirt',hp:BLOCKS.dirt.hp}));
  r.blocks=[...surface,...r.blocks.filter(block=>block.y!==4)];
+ // Remove the old fixed test chest from saved runs awaiting a new descent.
+ r.blocks=r.blocks.filter(block=>!(block.x===7&&block.y===6&&block.type==='vein'));
 }
 // Starts the procedural mine with the same seeded surface layout on every platform.
 export function createRun(_level:number,pick:Pick,enchant:Enchant='none',starter=false,seedOverride?:number):Run {
@@ -161,7 +163,7 @@ export function extendEndlessMine(r:Run){
    else if(q<.29)type=difficulty>=5?'gold':'stone';else if(q<.34)type=difficulty>=9?'gem':'stone';
    else if(q<.385)type=difficulty>=16?'emerald':'stone';else if(q<.405)type=difficulty>=36?'ancient':'stone';
    else if(q<.411)type=difficulty>=2?'double':'stone';else if(q<.416)type=difficulty>=4?'sweep':'stone';
-   else if(q<.420)type='repair';else if(q<.423)type=difficulty>=12?'relic':'stone';
+   else if(q<.420)type='repair';else if(q<.423)type='stone';
    else if(q<.435)type=difficulty>=4?'onehit':'stone';else if(q<.440)type=difficulty>=6?'phase':'stone';
    else if(q<.442)type=difficulty>=2?'tnt':'stone';else if(q<.450)type=difficulty>=3?'drill':'stone';else if(q<.458)type=difficulty>=4?'magnet':'stone';else if(q<.460)type=difficulty>=5?'curse':'stone';else if(q>.99&&difficulty>=36)type='bedrock';
    else if(q>.96&&difficulty>=22)type='obsidian';else if(q>.88&&difficulty>=7)type='hard';
@@ -201,10 +203,10 @@ function pickEndlessBonus(difficulty:number,rand:()=>number,row:number):BlockTyp
   {type:'phase',from:6,weight:.6},
   {type:'shield',from:2,weight:.025},
   {type:'coalCharge',from:3,weight:.8},
-  {type:'vein',from:2,weight:.08},
+  {type:'vein',from:4,weight:.04},
   {type:'helmet',from:3,weight:.08},
  ];
- const pool=candidates.filter(b=>difficulty>=b.from);
+ const pool=candidates.filter(b=>difficulty>=b.from&&(b.type!=='vein'||row>=104));
  if(!pool.length)return 'repair';
  let roll=rand()*pool.reduce((sum,b)=>sum+b.weight,0);
  for(const bonus of pool){roll-=bonus.weight;if(roll<0)return bonus.type;}
@@ -253,8 +255,7 @@ export function collectBlock(r:Run,b:Block,drop=true,cascade:BonusCascade={drill
   emit(r,{type:'bonus',x,y,kind:b.type,value:targets.length});return;
  }
  if(b.type==='vein'){
-  const rewards=[1,2,4,7,11,16,30],seed=(r.seed??r.level+1)|0;
-  const roll=(Math.imul(b.x+1,0x45d9f3b)^Math.imul(b.y+1,0x119de1f3)^seed)>>>0,value=rewards[roll%rewards.length];
+  const value=1000;
   r.ore+=value;emit(r,{type:'bonus',x:b.x*TILE+16,y:b.y*TILE+16,kind:b.type,value});return;
  }
  if(b.type==='helmet'){
@@ -365,6 +366,8 @@ function hit(r:Run,b:Block,wear=1){
 // Each run snapshots the equipped ability and its available charges.
 export function activateSkill(r:Run):boolean {
  if(r.status!=='playing'||!r.skillAura||!(r.skillCharges&&r.skillCharges>0))return false;
+ // Ghost charges are sequential: the next phase can start only after the current one ends.
+ if(r.skillAura==='ghost'&&(r.skillGhostTime??0)>0)return false;
  const stats=skillStats(r.skillAura,r.skillLevel??1);
  // Count the whole block, not only its centre: touching the field is enough.
  const targets=r.skillAura==='lightning'?r.blocks.filter(b=>{
@@ -402,7 +405,7 @@ export function stepRun(r:Run,dt:number){
  if(r.status==='ready')r.status='playing';
  if(r.status!=='playing')return;
  if(r.hp<=0&&!rescueHelmet(r)){r.status='lost';return;}
- dt=Math.min(Math.max(dt,0),1/60);r.time+=dt;r.skillFireTime=Math.max(0,(r.skillFireTime??0)-dt);r.skillDrillTime=Math.max(0,(r.skillDrillTime??0)-dt);r.skillGhostTime=Math.max(0,(r.skillGhostTime??0)-dt);r.oneHitTime=Math.max(0,(r.oneHitTime??0)-dt);r.phaseTime=Math.max(0,(r.phaseTime??0)-dt);r.magnetTime=Math.max(0,(r.magnetTime??0)-dt);r.shieldTime=Math.max(0,(r.shieldTime??0)-dt);r.helmetGraceTime=Math.max(0,(r.helmetGraceTime??0)-dt);
+ dt=Math.min(Math.max(dt,0),1/60);r.time+=dt;const decay=(value:number)=>{const remaining=Math.max(0,value-dt);return remaining<1e-9?0:remaining;};r.skillFireTime=decay(r.skillFireTime??0);r.skillDrillTime=decay(r.skillDrillTime??0);r.skillGhostTime=decay(r.skillGhostTime??0);r.oneHitTime=decay(r.oneHitTime??0);r.phaseTime=decay(r.phaseTime??0);r.magnetTime=decay(r.magnetTime??0);r.shieldTime=decay(r.shieldTime??0);r.helmetGraceTime=decay(r.helmetGraceTime??0);
  for(const f of r.fuses.filter(f=>f.t<=r.time)){
   r.fuses.splice(r.fuses.indexOf(f),1);const b=r.blocks.find(b=>b.x===f.x&&b.y===f.y&&b.type==='tnt'&&b.hp>0);
   if(b)blast(r,b.x*TILE+16,b.y*TILE+16);

@@ -6,8 +6,9 @@ import {buy,freshProgress,PRICES} from '../src/progress.ts';
 import {decodeProgress} from '../src/storage.ts';
 const skill=(aura:SkillAura,charges=1)=>{const r=createRun(0,'wood','none',false,123);r.blocks=[];r.status='playing';r.skillAura=aura;r.skillLevel=charges;r.skillCharges=charges;return r;};
 
-test('skills require a live run and consume one charge per activation',()=>{
- const r=skill('ghost',2);r.status='ready';assert.equal(activateSkill(r),false);r.status='playing';assert.equal(activateSkill(r),true);assert.equal(r.phaseTime,3);assert.equal(r.skillCharges,1);assert.equal(activateSkill(r),true);assert.equal(activateSkill(r),false);assert.equal(r.skillCharges,0);
+test('ghost skill charges can only be used sequentially after each phase ends',()=>{
+ const r=skill('ghost',2);r.status='ready';assert.equal(activateSkill(r),false);r.status='playing';assert.equal(activateSkill(r),true);assert.equal(r.phaseTime,3);assert.equal(r.skillCharges,1);assert.equal(activateSkill(r),false);assert.equal(r.skillCharges,1);
+ for(let i=0;i<180;i++)stepRun(r,1/60);assert.equal(r.skillGhostTime,0);assert.equal(activateSkill(r),true);assert.equal(r.skillCharges,0);
 });
 test('fire protects against block wear and expires',()=>{
  const r=skill('fire');assert.equal(activateSkill(r),true);r.blocks=[{x:6,y:6,type:'stone',hp:BLOCKS.stone.hp}];r.x=208;r.y=200;r.vx=0;r.vy=40;r.spin=0;r.angle=Math.PI/4+Math.PI;const hp=r.hp;stepRun(r,1/120);assert.ok(r.hits>0);assert.equal(r.hp,hp);

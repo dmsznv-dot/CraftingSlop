@@ -1,5 +1,6 @@
 import type {BlockType} from './core.ts';
-// Original 16×16 pixel art in a blocky voxel-game style, drawn from code. No third-party assets.
+import fixedBlockArt from './fixed-block-art.json' with {type:'json'};
+// Procedural 16×16 pixel art, with selected textures replaced by supplied sprite edits.
 export type Pixels=(string|null)[];
 export const SIZE=16;
 function random(seed:number){return()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
@@ -70,6 +71,35 @@ function bonusPixels(rand:()=>number,art:BonusArt):Pixels{
 const LETTERS=[['###','.#.','.#.','.#.','.#.'],['#..#','##.#','#.##','#..#','#..#'],['###','.#.','.#.','.#.','.#.']];
 export function blockPixels(type:BlockType|'grass'|'grassTop'|'cave'|'treeWood'|'treeLeaves'|'cobble',variant:number,bonusTier?:1|2|3):Pixels {
  const rand=random(type.length*977+variant*131+7);
+ const fixedKey=type==='drill'||type==='magnet'?`${type}-tier${bonusTier??1}`:type;
+ const fixed=(fixedBlockArt as Record<string,Pixels>)[fixedKey];
+ if(fixed)return [...fixed];
+ if(type==='vein'){
+  // A compact chest with a lid, dark trim and latch, drawn within a transparent tile.
+  const px=blank();
+  const rows=[
+   '................',
+   '................',
+   '....dddddddd....',
+   '...dlllllllmd...',
+   '..dbbbbbbbbmm...',
+   '..dbbbbbbbbmmd..',
+   '..ddddddddddmd..',
+   '..deeeeeeeeedd..',
+   '..dbbbbkbbbbdd..',
+   '..dbbbbkbbbbdd..',
+   '..dbbbbbbbbbdd..',
+   '..dbbbbbbbbbdd..',
+   '..dbbbbbbbbbdd..',
+   '...dddddddddd...',
+   '................',
+   '................',
+  ];
+  const colors:Record<string,string>={d:'#352018',l:'#dfac61',m:'#74502a',b:'#a97034',e:'#58371f',k:'#f5d48b'};
+  rows.forEach((row,y)=>[...row].forEach((c,x)=>{if(colors[c])set(px,x,y,colors[c]);}));
+  for(const [x,y] of [[4,8],[10,9],[5,11],[11,12],[7,4]])set(px,x,y,'#c18a49');
+  return px;
+ }
  if(type==='cobble'){
   const px=pattern(rand,['#55595a','#65696a','#737779','#848889','#96999a'],6,6,.6);
   // Uneven mortar joints and small highlights make distinct, rough stones.

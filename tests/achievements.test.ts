@@ -57,7 +57,7 @@ test('old saves preserve their wallet and recognize known records without invent
  const loaded=decodeProgress(JSON.stringify(old))!;assert.ok(loaded);
  assert.equal(loaded.coins,1234);assert.equal(loaded.achievements.bestDepth,300);
  assert.equal(loaded.achievements.tnt,0);assert.equal(loaded.achievements.runs,0);
- for(const id of ['bestDepth-100','bestDepth-200','bestDepth-300','ownedPicks-3','relics-10'])assert.ok(readyAchievements(loaded).some(a=>a.id===id));
+ for(const id of ['bestDepth-100','bestDepth-200','bestDepth-300','ownedPicks-3'])assert.ok(readyAchievements(loaded).some(a=>a.id===id));
 });
 
 test('unfinished attempts cannot farm completed-run achievements and records persist after death',()=>{

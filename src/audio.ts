@@ -7,12 +7,17 @@ import gravelUrl from './assets/audio/gravel.ogg?inline';
 import pickBreakUrl from './assets/audio/pick-break.mp3?inline';
 import reviveUrl from './assets/audio/revive.mp3?inline';
 import workshopUrl from './assets/audio/workshop.mp3?inline';
+import fireSpellUrl from './assets/audio/foom_0-fast.wav?inline';
+import teleportSpellUrl from './assets/audio/teleport.wav?inline';
+import enchantedSpellUrl from './assets/audio/complex-movements-whoosh.mp3?inline';
+import lightningSpellUrl from './assets/audio/electric-discharge-fast.wav?inline';
+import levelUpUrl from './assets/audio/level-up.wav?inline';
 import oldTowerMusicUrl from './assets/audio/The_Old_Tower_Inn.mp3?inline';
 import bardsTaleMusicUrl from './assets/audio/The_Bards_Tale.mp3?inline';
 import minstrelDanceMusicUrl from './assets/audio/Minstrel_Dance.mp3?inline';
 // Synthesised sounds from filtered noise; each material has its own colour so digging reads by ear.
-export type Sound='hit'|'clank'|'ore'|'blast'|'fuse'|'nudge'|'win'|'break'|'bonus'|'mine'|'pickBreak'|'revive';
-type Sample='dirt'|'stone'|'mine'|'oreImpact'|'gravel'|'pickBreak'|'revive'|'workshop';
+export type Sound='hit'|'clank'|'ore'|'blast'|'fuse'|'nudge'|'win'|'break'|'bonus'|'mine'|'pickBreak'|'revive'|'skillFire'|'skillGhost'|'skillEnchanted'|'skillLightning'|'levelUp';
+type Sample='dirt'|'stone'|'mine'|'oreImpact'|'gravel'|'pickBreak'|'revive'|'workshop'|'skillFire'|'skillGhost'|'skillEnchanted'|'skillLightning'|'levelUp';
 const ORE_TYPES=new Set<BlockType>(['copper','iron','gold','gem','emerald','ancient']);
 const GRAVEL_TYPES=new Set<BlockType>([...ORE_TYPES,'coal','stone']);
 // filter: band centre; q: resonance; decay: seconds; gain: loudness; grains: crunch repeats on a break.
@@ -48,7 +53,7 @@ const MATERIAL:Record<BlockType,{filter:number;q:number;decay:number;gain:number
 export class AudioBus {
  context:AudioContext|null=null;out:AudioNode|null=null;effectsGain:GainNode|null=null;musicVolume=100;effectsVolume=100;noise:AudioBuffer|null=null;enabled=true;muted=false;musicPaused=false;last=0;lastBreak=0;
  music:AudioBuffer[]=[];musicGain:GainNode|null=null;musicLoading=false;musicNextStart=0;musicNextIndex=0;
- samples:Partial<Record<Sample,AudioBuffer>>={};samplesStarted=false;samplesLoading:Promise<void>|null=null;uiSoundRequest=0;lastSample:Record<Sample,number>={dirt:-1,stone:-1,mine:-1,oreImpact:-1,gravel:-1,pickBreak:-1,revive:-1,workshop:-1};
+ samples:Partial<Record<Sample,AudioBuffer>>={};samplesStarted=false;samplesLoading:Promise<void>|null=null;uiSoundRequest=0;lastSample:Record<Sample,number>={dirt:-1,stone:-1,mine:-1,oreImpact:-1,gravel:-1,pickBreak:-1,revive:-1,workshop:-1,skillFire:-1,skillGhost:-1,skillEnchanted:-1,skillLightning:-1,levelUp:-1};
  unlock(){
   try{
    if(!this.context){
@@ -110,7 +115,7 @@ export class AudioBus {
  pause(on:boolean,keepMusic=false){this.muted=on;this.musicPaused=on&&!keepMusic;this.updateMusicVolume();if(on&&!keepMusic&&this.context?.state==='running')void this.context.suspend().catch(()=>{});else if((!on||keepMusic)&&this.context?.state==='suspended')void this.context.resume().catch(()=>{});}
  ready(){return this.enabled&&!this.muted&&!!this.context&&!!this.out&&this.context.state==='running';}
  async loadSamples(context:AudioContext){
-  const sources:{material:Sample;url:string}[]=[{material:'dirt',url:mud02Url},{material:'stone',url:stone01Url},{material:'mine',url:bonusPopUrl},{material:'oreImpact',url:oreImpactUrl},{material:'gravel',url:gravelUrl},{material:'pickBreak',url:pickBreakUrl},{material:'revive',url:reviveUrl},{material:'workshop',url:workshopUrl}];
+  const sources:{material:Sample;url:string}[]=[{material:'dirt',url:mud02Url},{material:'stone',url:stone01Url},{material:'mine',url:bonusPopUrl},{material:'oreImpact',url:oreImpactUrl},{material:'gravel',url:gravelUrl},{material:'pickBreak',url:pickBreakUrl},{material:'revive',url:reviveUrl},{material:'workshop',url:workshopUrl},{material:'skillFire',url:fireSpellUrl},{material:'skillGhost',url:teleportSpellUrl},{material:'skillEnchanted',url:enchantedSpellUrl},{material:'skillLightning',url:lightningSpellUrl},{material:'levelUp',url:levelUpUrl}];
   await Promise.all(sources.map(async({material,url})=>{
    try{const response=await fetch(url);if(!response.ok)throw new Error('audio request failed');const bytes=await response.arrayBuffer(),buffer=await context.decodeAudioData(bytes);if(this.context===context)this.samples[material]=buffer;}
    catch{/* The synthesised material sound remains as a local fallback. */}
@@ -142,7 +147,12 @@ export class AudioBus {
  }
  play(kind:Sound,material:BlockType='stone'){
   if(!this.ready())return;
-  const now=this.context!.currentTime,m=MATERIAL[material];
+  const now=this.context!.currentTime,m=MATERIAL[material]??MATERIAL.stone;
+  if(kind==='skillFire'&&this.playSample('skillFire',now,0,.65))return;
+  if(kind==='skillGhost'&&this.playSample('skillGhost',now,0,.65))return;
+  if(kind==='skillEnchanted'&&this.playSample('skillEnchanted',now,0,.65))return;
+  if(kind==='skillLightning'&&this.playSample('skillLightning',now,0,.65))return;
+  if(kind==='levelUp'&&this.playSample('levelUp',now,0,.7))return;
   if((kind==='hit'||kind==='clank')&&now-this.last<.045)return;
   if(kind==='hit'||kind==='clank')this.last=now;
   // A blast breaks many blocks in one frame; one crunch is enough.

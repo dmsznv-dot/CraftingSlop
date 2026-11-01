@@ -26,6 +26,7 @@ let p:Progress,r:Run,remote:Progress|null=null,screen='none',returnScreen='none'
 let game:Phaser.Game;let toastTimer:ReturnType<typeof setTimeout>;let warnedRun='';
 let auraPreviews:AuraPreviews|null=null;
 let settingsReturn='none';
+let shopTab:'picks'|'auras'='picks';
 let achievementReturn='none',achievementFilter:'all'|AchievementGroup='all';
 const at=()=>achievementCopy[p.lang];
 const formatCount=(n:number)=>n.toLocaleString(p.lang==='ru'?'ru-RU':'en-US');
@@ -72,7 +73,7 @@ function useSkill(){if(screen!=='none'||platform.gate.paused)return;
  if(!activateSkill(r)){if(r.status==='playing'&&r.skillAura==='lightning'&&(r.skillCharges??0)>0)notify(t('lightningNoOre'));return;}audio.unlock();
  if(r.skillAura==='lightning')notify(t('lightningMined').replace('{value}',String(r.ore-oreBefore)));
  const gained=r.ore-(r.oreClaimed??0);if(gained>0){p.coins+=gained;r.oreClaimed=r.ore;}
- audio.play('bonus');save();hud();}
+ audio.play(r.skillAura==='fire'?'skillFire':r.skillAura==='ghost'?'skillGhost':r.skillAura==='enchanted'?'skillEnchanted':r.skillAura==='lightning'?'skillLightning':'bonus');save();hud();}
 
 function render(){
  r.recordBefore??=p.endlessBest;
@@ -122,7 +123,7 @@ function hud(){
  const skill=document.querySelector<HTMLButtonElement>('#drop')!;
  if(r.status==='playing'&&r.skillAura){const label=t(skillNames[r.skillAura]),icon:Record<SkillAura,string>={fire:'shield',lightning:'bolt',enchanted:'spark',ghost:'phase'};const signature=`${r.skillAura}:${r.skillCharges??0}`;
   if(skill.dataset.skillIcon!==signature){skill.innerHTML=`<span class="skill-icon">${svg(icon[r.skillAura])}</span><span class="skill-count">${r.skillCharges??0}</span>`;skill.dataset.skillIcon=signature;}
-  skill.setAttribute('aria-label',`${t('skillAction')}: ${label}, ${r.skillCharges??0} / ${r.skillMaxCharges??skillStats(r.skillAura,r.skillLevel??1).uses}`);skill.title=label;skill.disabled=platform.gate.paused||!r.skillCharges;
+  skill.setAttribute('aria-label',`${t('skillAction')}: ${label}, ${r.skillCharges??0} / ${r.skillMaxCharges??skillStats(r.skillAura,r.skillLevel??1).uses}`);skill.title=label;skill.disabled=platform.gate.paused||!r.skillCharges||r.skillAura==='ghost'&&(r.skillGhostTime??0)>0;
  }else if(r.status==='playing'){skill.disabled=true;}
 
  const powerups=document.querySelector<HTMLElement>('#powerup-counter')!;powerups.innerHTML=powers.map(power=>`<span class="power-pill ${power.style}">${svg(power.icon)}<span>${power.label}</span></span>`).join('');powerups.classList.toggle('hidden',!powers.length);
@@ -146,7 +147,7 @@ function renderModal(){
  if(screen==='none')return;
  let content='';
  if(screen==='shop'){
-  content=`<div class="modal-panel shop-panel">${closeButton()}<h2>${t('shop')}</h2><div class="shop-wallet"><span>${t('wallet')}</span>${nugget}<b>${formatCount(p.coins)}</b></div><h3>${t('auras')}</h3><p class="aura-hint">${t('auraHint')}</p><div class="aura-grid" role="group" aria-label="${t('auras')}">${AURAS.map(aura=>{const hasSkill=aura!=='none',level=hasSkill?p.skillLevels[aura]:0;const description=hasSkill?`${t(skillNames[aura])}: ${skillDescription(aura,level||1)}`:'';return `<article class="aura-entry"><button class="aura-card aura-${aura}" data-aura="${aura}" aria-pressed="${p.aura===aura}" title="${description}"><span class="aura-preview"><canvas width="100" height="105" data-aura-preview="${aura}" aria-hidden="true"></canvas></span><b>${t(auraNames[aura])}</b><small>${hasSkill&&!level?t('skillBuy'):p.aura===aura?t('equipped'):t('equip')}</small></button>${hasSkill?`<div class="skill-details"><b>${t(skillNames[aura])}</b><p>${skillDescription(aura,level||1)}</p><small>${t('skillLevel')}: ${level} · ${level?skillStats(aura,level).uses:0} ${t('skillUses')}</small>${level&&level<SKILL_MAX_LEVEL?`<small>${p.lang==='ru'?'Далее':'Next'}: ${skillStats(aura,level+1).uses} ${t('skillUses')} · ${skillDescription(aura,level+1)}</small>`:''}${level?`<button class="secondary skill-upgrade" data-upgrade-aura="${aura}" ${level>=SKILL_MAX_LEVEL?'disabled':''}>${level>=SKILL_MAX_LEVEL?t('skillMax'):`${t('skillUpgrade')} · ${level+1}`}</button>`:''}</div>`:''}</article>`;}).join('')}<p class="fine skill-free">${t('skillFree')}</p></div><h3>${t('tools')}</h3><div class="pick-grid">${pickKeys.map((key,i)=>{
+  content=`<div class="modal-panel shop-panel">${closeButton()}<h2>${t('shop')}</h2><div class="shop-wallet"><span>${t('wallet')}</span>${nugget}<b>${formatCount(p.coins)}</b></div><div class="shop-tabs" role="tablist" aria-label="${t('shop')}">${(['picks','auras'] as const).map(tab=>`<button type="button" role="tab" id="shop-tab-${tab}" class="shop-tab" data-shop-tab="${tab}" aria-selected="${shopTab===tab}" aria-controls="shop-section-${tab}" tabindex="${shopTab===tab?0:-1}">${t(tab==='picks'?'tools':'auras')}</button>`).join('')}</div><section id="shop-section-auras" role="tabpanel" aria-labelledby="shop-tab-auras" ${shopTab!=='auras'?'hidden':''}><h3>${t('auras')}</h3><p class="aura-hint">${t('auraHint')}</p><div class="aura-grid" role="group" aria-label="${t('auras')}">${AURAS.map(aura=>{const hasSkill=aura!=='none',level=hasSkill?p.skillLevels[aura]:0;const description=hasSkill?`${t(skillNames[aura])}: ${skillDescription(aura,level||1)}`:'';return `<article class="aura-entry"><button class="aura-card aura-${aura}" data-aura="${aura}" aria-pressed="${p.aura===aura}" title="${description}"><span class="aura-preview"><canvas width="100" height="105" data-aura-preview="${aura}" aria-hidden="true"></canvas></span><b>${t(auraNames[aura])}</b><small>${hasSkill&&!level?t('skillBuy'):p.aura===aura?t('equipped'):t('equip')}</small></button>${hasSkill?`<div class="skill-details"><b>${t(skillNames[aura])}</b><p>${skillDescription(aura,level||1)}</p><small>${t('skillLevel')}: ${level} · ${level?skillStats(aura,level).uses:0} ${t('skillUses')}</small>${level&&level<SKILL_MAX_LEVEL?`<small>${p.lang==='ru'?'Далее':'Next'}: ${skillStats(aura,level+1).uses} ${t('skillUses')} · ${skillDescription(aura,level+1)}</small>`:''}${level?`<button class="secondary skill-upgrade" data-upgrade-aura="${aura}" ${level>=SKILL_MAX_LEVEL?'disabled':''}>${level>=SKILL_MAX_LEVEL?t('skillMax'):`${t('skillUpgrade')} · ${level+1}`}</button>`:''}</div>`:''}</article>`;}).join('')}<p class="fine skill-free">${t('skillFree')}</p></div></section><section id="shop-section-picks" role="tabpanel" aria-labelledby="shop-tab-picks" ${shopTab!=='picks'?'hidden':''}><h3>${t('tools')}</h3><div class="pick-grid">${pickKeys.map((key,i)=>{
    const owned=p.owned.includes(key),selected=p.pick===key,locked=i>0&&!p.owned.includes(pickKeys[i-1]);
    return `<article class="tool-card ${selected?'selected':''}">${pickIcon(key,'large')}<div class="tool-title"><b>${t(key)}</b><span>${PICKS[key].nudges} ${svg('spark')}</span></div><p>${t((key+'Desc') as Key)}</p><small>♥ ${PICKS[key].hp}</small><button class="${owned?'secondary':'buy'}" data-item="${key}" ${selected||locked||!owned&&p.coins<PRICES[key]?'disabled':''}>${selected?svg('check')+t('equipped'):owned?t('equip'):locked?svg('lock')+t('needPrevious'):nugget+formatCount(PRICES[key])}</button></article>`;
   }).join('')}</div><h3>${t('upgrades')}</h3><div class="upgrade-list">${(['helmet','wave','chain'] as Item[]).map(key=>{
@@ -154,7 +155,7 @@ function renderModal(){
    if(key==='helmet')return `<article class="upgrade"><div class="upgrade-icon">${svg('helmet')}</div><div><b>${t('helmetItem')}</b><p>${t('helmetItemDesc')}</p><small>${t('chainStock')}: ${p.helmetCharges}</small></div><button class="secondary" data-item="helmet" ${p.coins<PRICES.helmet||p.helmetCharges>=99?'disabled':''}>${nugget}${formatCount(PRICES.helmet)}</button></article>`;
    if(key==='chain')return `<article class="upgrade"><div class="upgrade-icon">${svg('spark')}</div><div><b>${t('chain')}</b><p>${t('chainItemDesc')}</p><small>${t('chainStock')}: ${p.chainCharges}</small></div><button class="secondary" data-item="chain" ${p.coins<PRICES.chain||p.chainCharges>=99?'disabled':''}>${nugget}${formatCount(PRICES.chain)}</button></article>`;
    return `<article class="upgrade"><div class="upgrade-icon">${key==='starter'?'<span class="tnt-mini">TNT</span>':svg('spark')}</div><div><b>${t(key as Key)}</b><p>${t((key+'Desc') as Key)}</p></div><button class="secondary" data-item="${key}" ${selected||!owned&&p.coins<PRICES[key]?'disabled':''}>${selected?svg('check'):owned?t('equip'):nugget+formatCount(PRICES[key])}</button></article>`;
-  }).join('')}</div>${p.enchant!=='none'?`<button class="text-button" data-action="unequip">${t('none')}</button>`:''}<p class="fine">${t('enchants')}</p></div>`;
+  }).join('')}</div>${p.enchant!=='none'?`<button class="text-button" data-action="unequip">${t('none')}</button>`:''}<p class="fine">${t('enchants')}</p></section></div>`;
  }else if(screen==='achievements'){
   content=renderAchievements();
  }else if(screen==='settings'){
@@ -281,9 +282,10 @@ async function boot(){
  });
  app.addEventListener('click',e=>{
   const el=(e.target as HTMLElement).closest<HTMLButtonElement>('button');if(!el||el.disabled)return;
-  if(el.dataset.upgradeAura){const aura=el.dataset.upgradeAura as SkillAura;if(p.skillLevels[aura]>0&&p.skillLevels[aura]<SKILL_MAX_LEVEL){const scroll=el.closest<HTMLElement>('.modal-panel')?.scrollTop??0;p.skillLevels[aura]++;save();render();const panel=document.querySelector<HTMLElement>('.modal-panel');if(panel)panel.scrollTop=scroll;document.querySelector<HTMLButtonElement>(`[data-upgrade-aura="${aura}"]`)?.focus({preventScroll:true});}return;}
+  if(screen==='shop'&&(el.dataset.shopTab==='picks'||el.dataset.shopTab==='auras')){shopTab=el.dataset.shopTab;renderModal();document.querySelector<HTMLButtonElement>(`[data-shop-tab="${shopTab}"]`)?.focus({preventScroll:true});return;}
+  if(el.dataset.upgradeAura){const aura=el.dataset.upgradeAura as SkillAura;if(p.skillLevels[aura]>0&&p.skillLevels[aura]<SKILL_MAX_LEVEL){const scroll=el.closest<HTMLElement>('.modal-panel')?.scrollTop??0;p.skillLevels[aura]++;audio.unlock();audio.play('levelUp');save();render();const panel=document.querySelector<HTMLElement>('.modal-panel');if(panel)panel.scrollTop=scroll;document.querySelector<HTMLButtonElement>(`[data-upgrade-aura="${aura}"]`)?.focus({preventScroll:true});}return;}
   if(el.dataset.aura&&AURAS.includes(el.dataset.aura as Aura)){
-   const scroll=el.closest<HTMLElement>('.modal-panel')?.scrollTop??0;p.aura=el.dataset.aura as Aura;if(p.aura!=='none'&&!p.skillLevels[p.aura])p.skillLevels[p.aura]=1;save();render();
+   const scroll=el.closest<HTMLElement>('.modal-panel')?.scrollTop??0;const selectedAura=el.dataset.aura as Aura;p.aura=selectedAura;const unlocksSkill=selectedAura!=='none'&&!p.skillLevels[selectedAura];if(unlocksSkill){p.skillLevels[selectedAura]=1;audio.unlock();audio.play('levelUp');}save();render();
    const panel=document.querySelector<HTMLElement>('.modal-panel');if(panel)panel.scrollTop=scroll;
    document.querySelector<HTMLButtonElement>(`[data-aura="${p.aura}"]`)?.focus({preventScroll:true});return;
   }
@@ -291,12 +293,13 @@ async function boot(){
   if(el.dataset.achievementFilter){achievementFilter=el.dataset.achievementFilter as typeof achievementFilter;renderModal();return;}
   if(el.dataset.action)void handleAction(el.dataset.action);
   if(el.id==='place-tnt'){placing=!placing;render();}
-  if(el.dataset.item){const key=el.dataset.item as Item,scroll=el.closest<HTMLElement>('.modal-panel')?.scrollTop??0;if(p.owned.includes(key)){if(pickKeys.includes(key as Pick))p.pick=key as Pick;else if(key==='wave')p.enchant=key;}else if(!buy(p,key)){notify(t('notEnough'));return;}else notify(t('bought'));
+  if(el.dataset.item){const key=el.dataset.item as Item,scroll=el.closest<HTMLElement>('.modal-panel')?.scrollTop??0;if(p.owned.includes(key)){if(pickKeys.includes(key as Pick))p.pick=key as Pick;else if(key==='wave')p.enchant=key;}else if(!buy(p,key)){notify(t('notEnough'));return;}else{notify(t('bought'));if(pickKeys.includes(key as Pick)){audio.unlock();audio.play('levelUp');}}
    if(r.status==='ready'&&key!=='helmet'&&key!=='chain'){const column=Math.floor(r.x/32);r=createRun(0,p.pick,p.enchant,p.owned.includes('starter'),crypto.getRandomValues(new Uint32Array(1))[0]);r.x=column*32+16;}
    save();render();const panel=document.querySelector<HTMLElement>('.modal-panel');if(panel)panel.scrollTop=scroll;document.querySelector<HTMLButtonElement>(`[data-item="${key}"]`)?.focus({preventScroll:true});
   }
  });
  window.addEventListener('keydown',e=>{
+  if(screen==='shop'&&(e.code==='ArrowLeft'||e.code==='ArrowRight')&&(e.target as HTMLElement).getAttribute('role')==='tab'){e.preventDefault();shopTab=shopTab==='picks'?'auras':'picks';renderModal();document.querySelector<HTMLButtonElement>(`[data-shop-tab="${shopTab}"]`)?.focus({preventScroll:true});return;}
   if((e.code==='ArrowLeft'||e.code==='ArrowRight')&&!(e.target instanceof HTMLInputElement)){e.preventDefault();if(!e.repeat)performNudge(e.code==='ArrowLeft'?-1:1);}
   if(e.code==='Escape'&&!e.repeat){if(screen==='pause')modal('none');else if(screen==='none'&&r.status==='playing')modal('pause');else if(screen==='achievements')modal(achievementReturn);else if(screen==='shop')modal(returnScreen);else if(screen==='guide-how'||screen==='guide-atlas')modal('settings');else if(screen==='settings')modal(settingsReturn);}
   if(e.code==='KeyE'&&!e.repeat&&!(e.target instanceof HTMLInputElement))useSkill();

@@ -25,6 +25,10 @@ function migrateBlockBalance(r:Run){
  for(const b of r.blocks){const hp=old[b.type];if(hp!==undefined&&finite(b.hp)&&b.hp>0&&b.hp<=hp)b.hp=b.hp/hp*BLOCKS[b.type].hp;}
  r.blockBalanceVersion=1;
 }
+function migrateEarlyChests(r:Run){
+ r.blocks=r.blocks.filter(b=>!(b.type==='vein'&&b.x===7&&b.y===6));
+ for(const b of r.blocks)if(b.type==='vein'&&b.y<104){b.type='stone';b.hp=BLOCKS.stone.hp;}
+}
 function migrateHelmet(r:Run){
  if(r.helmetCollected!==undefined)return;
  r.helmetCollected=!!r.helmetReady;
@@ -70,11 +74,11 @@ export function decodeProgress(raw:string):Progress|null {
   p.musicVolume=finite(p.musicVolume)?Math.max(0,Math.min(100,Math.round(p.musicVolume))):100;p.effectsVolume=finite(p.effectsVolume)?Math.max(0,Math.min(100,Math.round(p.effectsVolume))):100;p.tutorial=p.tutorial===true;p.owned=[...new Set(p.owned)] as Item[];
   if(p.attempt){p.attempt.doubleLeft??=0;p.attempt.oneHitTime??=0;p.attempt.phaseTime??=0;p.attempt.magnetTime??=0;p.attempt.shieldTime??=0;p.attempt.helmetGraceTime??=0;p.attempt.hpBonus??=0;p.attempt.benchUsed??=false;p.attempt.benchSpawned??=false;migrateDurability(p.attempt);migrateHelmet(p.attempt);p.attempt.helmetReady??=false;}
   if(p.attempt&&!validRun(p.attempt))p.attempt=null;
-  if(p.attempt){normalizeRunAchievements(p.attempt);p.attempt.events=[];p.attempt.contacts={};p.attempt.fuses??=[];}
+  if(p.attempt){p.attempt.blocks=p.attempt.blocks.filter(b=>b.type!=='relic');normalizeRunAchievements(p.attempt);p.attempt.events=[];p.attempt.contacts={};p.attempt.fuses??=[];}
   if(p.endlessAttempt){p.endlessAttempt.doubleLeft??=0;p.endlessAttempt.oneHitTime??=0;p.endlessAttempt.phaseTime??=0;p.endlessAttempt.magnetTime??=0;p.endlessAttempt.shieldTime??=0;p.endlessAttempt.helmetGraceTime??=0;p.endlessAttempt.hpBonus??=0;p.endlessAttempt.benchUsed??=false;p.endlessAttempt.benchSpawned??=false;p.endlessAttempt.relics??=0;p.endlessAttempt.claimedRelics??=0;p.endlessAttempt.oreClaimed??=0;p.endlessAttempt.mode='endless';migrateDurability(p.endlessAttempt);migrateHelmet(p.endlessAttempt);migrateBlockBalance(p.endlessAttempt);p.endlessAttempt.helmetReady??=false;}
   if(p.endlessAttempt?.skillAura&&p.endlessAttempt.skillMaxCharges===undefined)p.endlessAttempt.skillMaxCharges=Math.max(p.endlessAttempt.skillLevel??1,p.endlessAttempt.skillCharges??0);
   if(p.endlessAttempt&&(!validRun(p.endlessAttempt)||p.endlessAttempt.mode!=='endless'))p.endlessAttempt=null;
-  if(p.endlessAttempt){ensureSurface(p.endlessAttempt);normalizeRunAchievements(p.endlessAttempt);p.endlessAttempt.events=[];p.endlessAttempt.contacts={};p.endlessAttempt.fuses??=[];}
+  if(p.endlessAttempt){p.endlessAttempt.blocks=p.endlessAttempt.blocks.filter(b=>b.type!=='relic');migrateEarlyChests(p.endlessAttempt);ensureSurface(p.endlessAttempt);normalizeRunAchievements(p.endlessAttempt);p.endlessAttempt.events=[];p.endlessAttempt.contacts={};p.endlessAttempt.fuses??=[];}
   p.achievements=restoreAchievements(p.achievements,p);
   return p;
  }catch{return null;}

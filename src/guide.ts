@@ -33,9 +33,8 @@ export const atlasGroups:{title:Copy;entries:Entry[]}[]=[
   entry('curse','Проклятие','Curse','Отнимает 25% максимальной прочности.','Removes 25% of maximum durability.'),
   entry('shield','Щит','Shield','На 5 секунд защищает от износа при ударах.','Prevents impact wear for 5 seconds.'),
   entry('coalCharge','Угольный заряд','Coal charge','Поджигает ближайший TNT.','Lights nearby TNT.'),
-  entry('vein','Денежная жила','Money vein','Даёт случайную награду наггетами.','Awards a random number of nuggets.'),
+  entry('vein','Сундук с наггетами','Nugget chest','Редкая находка после 100 м: даёт 1000 наггетов.','A rare find below 100 m: awards 1,000 nuggets.'),
   entry('helmet','Шахтёрская каска','Miner’s helmet','Один раз за забег спасает от поломки и возвращает 25% прочности.','Once per run, saves the pick and restores 25% durability.'),
-  entry('relic','Осколок','Shard','Редкий осколок сохраняется после спуска.','A rare shard saved after the run.'),
  ]},
 ];
 export const guideCopy={

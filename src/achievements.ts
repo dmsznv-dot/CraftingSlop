@@ -12,8 +12,8 @@ export interface AchievementState {
  oreTypes:BlockType[];bonusTypes:BlockType[];claimed:string[];
 }
 export const achievementCopy={
- ru:{title:'Достижения',hint:'Ставь рекорды за один спуск и собирай достижения за всю игру. Награды забираются вручную.',claim:'Забрать',claimed:'Получено',progress:'В процессе',claimAll:'Забрать всё',ready:'Доступно наград',completed:'Выполнено',reward:'Награда',earned:'Награда получена',all:'Все',depth:'Глубина',mining:'Добыча',explosions:'Взрывы',bonuses:'Бонусы',journey:'Путь шахтёра',history:'Старый рекорд глубины, купленные кирки и осколки учтены. Новые накопительные счётчики ведутся с появления достижений.'},
- en:{title:'Achievements',hint:'Set records in a single descent and reach lifetime milestones. Claim rewards here.',claim:'Claim',claimed:'Claimed',progress:'In progress',claimAll:'Claim all',ready:'Rewards ready',completed:'Completed',reward:'Reward',earned:'Reward claimed',all:'All',depth:'Depth',mining:'Mining',explosions:'Explosions',bonuses:'Bonuses',journey:'Miner’s journey',history:'Existing depth records, owned picks and shards count. New lifetime counters start with this update.'}
+ ru:{title:'Достижения',hint:'Ставь рекорды за один спуск и собирай достижения за всю игру. Награды забираются вручную.',claim:'Забрать',claimed:'Получено',progress:'В процессе',claimAll:'Забрать всё',ready:'Доступно наград',completed:'Выполнено',reward:'Награда',earned:'Награда получена',all:'Все',depth:'Глубина',mining:'Добыча',explosions:'Взрывы',bonuses:'Бонусы',journey:'Путь шахтёра',history:'Старый рекорд глубины и купленные кирки учтены. Новые накопительные счётчики ведутся с появления достижений.'},
+ en:{title:'Achievements',hint:'Set records in a single descent and reach lifetime milestones. Claim rewards here.',claim:'Claim',claimed:'Claimed',progress:'In progress',claimAll:'Claim all',ready:'Rewards ready',completed:'Completed',reward:'Reward',earned:'Reward claimed',all:'All',depth:'Depth',mining:'Mining',explosions:'Explosions',bonuses:'Bonuses',journey:'Miner’s journey',history:'Existing depth records and owned picks count. New lifetime counters start with this update.'}
 };
 const make=(metric:Metric,group:AchievementGroup,titles:[string,string],targets:number[],rewards:number[]):Achievement[]=>targets.map((target,i)=>({id:`${metric}-${target}`,metric,group,target,reward:rewards[i],title:{ru:titles[0],en:titles[1]}}));
 export const ACHIEVEMENTS:Achievement[]=[
@@ -31,7 +31,6 @@ export const ACHIEVEMENTS:Achievement[]=[
  ...make('helmetSaves','bonuses',['Второй шанс','Second chance'],[1],[800]),
  ...make('runs','journey',['Ещё один забег','One more run'],[10,50,150,500],[300,1000,2500,6000]),
  ...make('ownedPicks','journey',['Арсенал шахтёра','Miner’s arsenal'],[3,5,7],[800,3000,8000]),
- ...make('relics','journey',['Искатель древностей','Ancient explorer'],[1,10,50],[500,1500,5000]),
 ];
 const descriptions:Record<Metric,Record<Lang,(n:number)=>string>>={
  bestDepth:{ru:n=>`Достичь глубины ${n} м в бесконечной шахте.`,en:n=>`Reach ${n} m in the endless mine.`},

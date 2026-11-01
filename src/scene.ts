@@ -46,6 +46,21 @@ export class MineScene extends Phaser.Scene {
   for(const type of ['drill','magnet'] as const)for(const tier of [1,2,3] as const)for(let variant=0;variant<3;variant++){
    const tex=canvas(`${type}-tier${tier}-${variant}`,48);paint(tex.context,blockPixels(type,variant,tier),3);tex.refresh();
   }
+  // Three separately textured faces form the chest; the projection is shared with the mine blocks.
+  for(const side of ['front','side','top'] as const){
+   const tex=canvas('chest-'+side,48),c=tex.context;
+   const rect=(color:string,x:number,y:number,w:number,h:number)=>{c.fillStyle=color;c.fillRect(x*3,y*3,w*3,h*3);};
+   rect('#382116',0,0,16,16);rect('#a76b35',1,1,14,14);
+   // Broken-up grain instead of repeating horizontal stripes.
+   for(const [x,y,w] of [[2,2,3],[8,2,4],[4,3,2],[11,3,2],[2,9,3],[8,9,4],[4,11,3],[10,12,3],[2,13,2]])rect('#bd8145',x,y,w,1);
+   for(const [x,y,w] of [[5,2,2],[2,4,3],[9,3,2],[4,10,2],[11,10,2],[7,12,2],[4,13,3]])rect('#8e562b',x,y,w,1);
+   rect('#57321c',1,1,14,1);rect('#d39a57',2,1,12,1);rect('#4a2b1a',1,14,14,1);
+   if(side==='front'||side==='side'){
+    rect('#422719',0,5,16,2);rect('#d39a57',1,4,14,1);rect('#754421',1,7,14,1);
+    if(side==='front'){rect('#3b281d',6,5,4,4);rect('#eee1b6',7,5,2,3);rect('#a69879',7,8,2,1);}
+   }else{rect('#59371f',1,2,1,12);rect('#59371f',14,2,1,12);}
+   tex.refresh();
+  }
   this.depthTexture=canvas('mine-depth',1);
   const sun=canvas('sun-glow',160),sunCtx=sun.context;
   const glow=sunCtx.createRadialGradient(80,80,9,80,80,76);
@@ -107,7 +122,7 @@ export class MineScene extends Phaser.Scene {
    if(!view){view={image:this.add.image(b.x*TILE+16,b.y*TILE+16,blockTexture(b,r)).setDepth(2).setScale(2/3),hp:NaN,type:b.type};this.blockViews.set(b,view);}
    const img=view.image;
    if(view.type!==b.type){view.type=b.type;img.setTexture(blockTexture(b,r));view.hp=NaN;}
-   img.setVisible(b.hp>0);
+   img.setVisible(b.hp>0&&b.type!=='vein');
    if(view.hp!==b.hp){
     view.hp=b.hp;const worn=b.hp>0&&b.hp<BLOCKS[b.type].hp;
     if(worn&&!view.crack)view.crack=this.add.image(b.x*TILE+16,b.y*TILE+16,'crack0').setDepth(3).setScale(2/3);
@@ -298,7 +313,7 @@ export class MineScene extends Phaser.Scene {
   if(tex.width!==width||tex.height!==height){tex.setSize(width,height);this.depthLayer.setTexture('mine-depth');}
   this.depthLayer.setPosition(view.x,view.y);
   const ctx=tex.context;ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,width,height);ctx.imageSmoothingEnabled=false;
-  const solid=new Set<string>();for(const b of r.blocks)if(b.hp>0)solid.add(`${b.x},${b.y}`);
+  const solid=new Set<string>();for(const b of r.blocks)if(b.hp>0&&b.type!=='vein')solid.add(`${b.x},${b.y}`);
   type Point={x:number;y:number};
   const point=(x:number,y:number):Point=>({x:x-view.x,y:y-view.y});
   // A back plane projects toward the camera's centre, so its direction
@@ -314,7 +329,7 @@ export class MineScene extends Phaser.Scene {
    ctx.fillStyle=`rgba(0,0,0,${shade})`;ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.lineTo(p3.x,p3.y);ctx.closePath();ctx.fill();
   };
   for(const b of r.blocks){
-   if(b.hp<=0)continue;
+   if(b.hp<=0||b.type==='vein')continue;
    const x=b.x*TILE,y=b.y*TILE;
    if(x+TILE<view.x-40||x>view.right+40||y+TILE<view.y-40||y>view.bottom+40)continue;
    const base=b.y===4&&b.type==='dirt'?'grass':b.type,source=(this.textures.get(blockTexture(b,r)) as Phaser.Textures.CanvasTexture).canvas;
@@ -329,6 +344,21 @@ export class MineScene extends Phaser.Scene {
     const topSource=base==='grass'?(this.textures.get('grassTop'+((b.x+b.y)%3)) as Phaser.Textures.CanvasTexture).canvas:source;
     face(topSource,point(x,y),point(x+TILE,y),back(x+TILE,y),back(x,y),.12);
    }
+  }
+  const chestFront=(this.textures.get('chest-front') as Phaser.Textures.CanvasTexture).canvas;
+  const chestSide=(this.textures.get('chest-side') as Phaser.Textures.CanvasTexture).canvas;
+  const chestTop=(this.textures.get('chest-top') as Phaser.Textures.CanvasTexture).canvas;
+  for(const b of r.blocks){
+   if(b.hp<=0||b.type!=='vein')continue;
+   const x=b.x*TILE+3,y=b.y*TILE+6,w=26,h=25;
+   if(x+w<view.x-40||x>view.right+40||y+h<view.y-40||y>view.bottom+40)continue;
+   // Same vanishing point as the blocks, with a slightly shallower back plane.
+   const chestBack=(px:number,py:number)=>point(view.centerX+(px-view.centerX)*.95,view.centerY+(py-view.centerY)*.95);
+   if(x+w<=view.centerX)face(chestSide,point(x+w,y),chestBack(x+w,y),chestBack(x+w,y+h),point(x+w,y+h),.25);
+   else if(x>=view.centerX)face(chestSide,chestBack(x,y),point(x,y),point(x,y+h),chestBack(x,y+h),.25);
+   if(y>=view.centerY)face(chestTop,point(x,y),point(x+w,y),chestBack(x+w,y),chestBack(x,y),.1);
+   else if(y+h<=view.centerY)face(chestSide,chestBack(x,y+h),chestBack(x+w,y+h),point(x+w,y+h),point(x,y+h),.38);
+   face(chestFront,point(x,y),point(x+w,y),point(x+w,y+h),point(x,y+h),0);
   }
   tex.refresh();
  }
