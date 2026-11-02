@@ -165,6 +165,7 @@
 .game-shell .settings-mute { width:100%; min-height:44px; }
 
 .depth-value { display:flex; align-items:baseline; gap:6px; flex-wrap:wrap; }
+.game-shell .best-depth { display:block; margin-top:5px; color:#f2d58e; font:700 8px/1 var(--sans); letter-spacing:.025em; white-space:nowrap; }
 .game-shell .hud-stat #depth.is-record { color:#ffd374; }
 .record-label { color:#ffd374; font:800 9px/1 var(--sans); letter-spacing:.02em; animation:record-pulse 1.15s ease-in-out infinite; }
 .game-shell #hp-fill.low { background:linear-gradient(90deg,#d42d2d,#ff6550); animation:critical-pulse .8s ease-in-out infinite; }
@@ -184,7 +185,6 @@
 .skill-details p { margin:5px 0; color:#ddd; }
 .skill-details small { color:#bbb; display:block; }
 .game-shell .skill-upgrade { width:100%; min-height:40px; margin-top:8px; padding:7px 4px; font-size:10px; }
-.skill-free { grid-column:1/-1; margin:0; }
 
 @media(max-width:700px) { .skill-details { font-size:10px; } }
 
@@ -203,6 +203,8 @@
 /* Help and atlas use the same charcoal panels and square buttons as settings. */
 .settings-links { display:grid; gap:10px; margin-top:14px; }
 .game-shell .settings-links button { width:100%; min-height:44px; justify-content:space-between; }
+.game-shell .settings-language>span { display:inline-flex; align-items:center; gap:10px; }
+.game-shell .settings-language .language-flag { display:block; width:24px; height:24px; flex:none; }
 .game-shell .guide-panel { max-width:720px; text-align:left; }
 .guide-panel h2 { margin:20px 45px 0 0; }
 .guide-panel .guide-back { min-height:40px; padding:8px 14px; }
@@ -212,17 +214,33 @@
 .guide-steps section>span { display:grid; place-items:center; flex:none; width:32px; height:32px; background:#393a36; color:#ffe1a0; font:700 15px var(--sans); }
 .guide-steps b,.atlas-entry b { color:#f4f2e5; font:700 14px/1.3 var(--sans); }
 .guide-steps p,.atlas-entry p { margin:5px 0 0; color:#d1d3cb; font:13px/1.45 var(--sans); }
+.credits-group h3 { margin:22px 0 9px; color:#dbc28b; font:700 13px var(--sans); letter-spacing:.04em; }
+.credits-list { display:grid; gap:8px; }
+.credits-entry { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 13px; border:1px solid #ffffff2b; background:#0b0b0bbd; font-family:var(--sans); }
+.credits-entry b { color:#f4f2e5; font-size:13px; }
+.credits-entry p { margin:4px 0 0; color:#c7cbc1; font-size:11px; line-height:1.45; }
+.credits-entry a { display:flex; flex:none; align-items:center; gap:5px; color:#f0d18a; font:700 11px var(--sans); text-decoration:none; }
+.credits-entry a:hover { text-decoration:underline; }
+.credits-entry a svg { width:14px; height:14px; }
 .atlas-section h3 { margin:24px 0 10px; color:#dbc28b; font:700 13px var(--sans); letter-spacing:.06em; }
 .atlas-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .atlas-entry img { width:48px; height:48px; image-rendering:pixelated; flex:none; }
 .atlas-entry small { display:inline-flex; align-items:center; gap:6px; margin-top:8px; color:#f5d78c; font:700 12px var(--sans); }
 .atlas-entry .nugget { width:13px; height:9px; }
-@media(max-width:560px) { .atlas-list { grid-template-columns:1fr; }.game-shell .guide-panel { padding:20px 16px; }.guide-panel h2 { font-size:26px; } }
+@media(max-width:560px) { .atlas-list { grid-template-columns:1fr; }.game-shell .guide-panel { padding:20px 16px; }.guide-panel h2 { font-size:26px; }.credits-entry { align-items:flex-start; } }
 
 /* Leave room for the persistent workshop button above the shop dialog. */
 .game-shell .modal-layer.is-shop { padding-top:120px; }
 @media(max-width:700px) { .game-shell .modal-layer.is-shop { padding-top:calc(110px + env(safe-area-inset-top)); } }
+.game-shell .modal-layer.is-info { padding-top:146px; }
+@media(max-width:700px) { .game-shell .modal-layer.is-info { padding-top:calc(136px + env(safe-area-inset-top)); } }
 .atlas-tier-icons { display:flex; flex-wrap:wrap; gap:4px; width:65px; flex:none; }
 .atlas-tier-icons span { display:flex; flex-direction:column; align-items:center; gap:2px; }
 .atlas-tier-icons img { width:30px; height:30px; }
 .atlas-entry .atlas-tier-icons small { margin:0; font:700 9px/1 var(--sans); color:#eee; }
+
+/* Localized vector wordmarks replace the old mountain emblem and title. */
+.game-shell .brand { flex:0 0 auto; min-width:0; }
+.game-shell .brand-logo { display:block; width:auto; height:46px; object-fit:contain; }
+@media(max-width:700px) { .game-shell .brand-logo { height:36px; } }
+@media(max-width:380px) { .game-shell .brand-logo { height:30px; } }

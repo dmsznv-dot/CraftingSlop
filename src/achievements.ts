@@ -1,6 +1,7 @@
 import {BLOCKS,PICKS} from './core.ts';
 import type {BlockType,Run,RunCounters,RunLedger} from './core.ts';
 import type {Progress} from './progress.ts';
+import {BALANCE} from './balance.ts';
 
 type Lang='ru'|'en';
 export type AchievementGroup='depth'|'mining'|'explosions'|'bonuses'|'journey';
@@ -15,22 +16,23 @@ export const achievementCopy={
  ru:{title:'Достижения',hint:'Ставь рекорды за один спуск и собирай достижения за всю игру. Награды забираются вручную.',claim:'Забрать',claimed:'Получено',progress:'В процессе',claimAll:'Забрать всё',ready:'Доступно наград',completed:'Выполнено',reward:'Награда',earned:'Награда получена',all:'Все',depth:'Глубина',mining:'Добыча',explosions:'Взрывы',bonuses:'Бонусы',journey:'Путь шахтёра',history:'Старый рекорд глубины и купленные кирки учтены. Новые накопительные счётчики ведутся с появления достижений.'},
  en:{title:'Achievements',hint:'Set records in a single descent and reach lifetime milestones. Claim rewards here.',claim:'Claim',claimed:'Claimed',progress:'In progress',claimAll:'Claim all',ready:'Rewards ready',completed:'Completed',reward:'Reward',earned:'Reward claimed',all:'All',depth:'Depth',mining:'Mining',explosions:'Explosions',bonuses:'Bonuses',journey:'Miner’s journey',history:'Existing depth records and owned picks count. New lifetime counters start with this update.'}
 };
-const make=(metric:Metric,group:AchievementGroup,titles:[string,string],targets:number[],rewards:number[]):Achievement[]=>targets.map((target,i)=>({id:`${metric}-${target}`,metric,group,target,reward:rewards[i],title:{ru:titles[0],en:titles[1]}}));
+const make=(metric:Metric,group:AchievementGroup,titles:[string,string],targets:number[],rewards:readonly number[]):Achievement[]=>targets.map((target,i)=>({id:`${metric}-${target}`,metric,group,target,reward:rewards[i],title:{ru:titles[0],en:titles[1]}}));
 export const ACHIEVEMENTS:Achievement[]=[
- ...make('bestDepth','depth',['Всё глубже','Going deeper'],[100,200,300,500,750,1000],[400,800,1500,3000,5000,8000]),
- ...make('woodDepth','depth',['Упрямое дерево','Stubborn wood'],[75,150],[400,1200]),
- ...make('bestOre','mining',['Богатый спуск','Rich descent'],[100,300,600,1000,2000,4000],[200,400,800,1500,3000,6000]),
- ...make('oreBlocks','mining',['Рудокоп','Ore miner'],[100,1000,5000],[500,1500,4000]),
- ...make('totalOre','mining',['Шахтёрский капитал','Mining capital'],[5000,25000,100000],[800,2000,5000]),
- ...make('oreTypes','mining',['Геолог','Geologist'],[4,7],[800,3000]),
- ...make('bestTnt','explosions',['Взрывной спуск','Explosive descent'],[3,10,25],[250,800,1800]),
- ...make('tnt','explosions',['Подрывник','Demolition expert'],[50,250,1000],[800,1800,5000]),
- ...make('bestBonuses','bonuses',['Поймал волну','On a roll'],[25,100,250],[250,800,1800]),
- ...make('bonuses','bonuses',['Охотник за бонусами','Bonus hunter'],[100,1000,10000],[600,1800,5000]),
- ...make('bonusTypes','bonuses',['Есть что попробовать','Try everything'],[5,10],[600,2000]),
- ...make('helmetSaves','bonuses',['Второй шанс','Second chance'],[1],[800]),
- ...make('runs','journey',['Ещё один забег','One more run'],[10,50,150,500],[300,1000,2500,6000]),
- ...make('ownedPicks','journey',['Арсенал шахтёра','Miner’s arsenal'],[3,5,7],[800,3000,8000]),
+ ...make('bestDepth','depth',['Всё глубже','Going deeper'],[100,200,300,500,750,1000],BALANCE.achievementRewards.bestDepth),
+ ...make('woodDepth','depth',['Упрямое дерево','Stubborn wood'],[75,150],BALANCE.achievementRewards.woodDepth),
+ ...make('bestOre','mining',['Богатый спуск','Rich descent'],[100,300,600,1000,2000,4000],BALANCE.achievementRewards.bestOre),
+ ...make('oreBlocks','mining',['Рудокоп','Ore miner'],[100,1000,5000],BALANCE.achievementRewards.oreBlocks),
+ ...make('totalOre','mining',['Шахтёрский капитал','Mining capital'],[5000,25000,100000],BALANCE.achievementRewards.totalOre),
+ ...make('oreTypes','mining',['Геолог','Geologist'],[4,7],BALANCE.achievementRewards.oreTypes),
+ ...make('bestTnt','explosions',['Взрывной спуск','Explosive descent'],[3,10,25],BALANCE.achievementRewards.bestTnt),
+ ...make('tnt','explosions',['Подрывник','Demolition expert'],[50,250,1000],BALANCE.achievementRewards.tnt),
+ ...make('bestBonuses','bonuses',['Поймал волну','On a roll'],[25,100,250],BALANCE.achievementRewards.bestBonuses),
+ ...make('bonuses','bonuses',['Охотник за бонусами','Bonus hunter'],[100,1000,10000],BALANCE.achievementRewards.bonuses),
+ ...make('bonusTypes','bonuses',['Есть что попробовать','Try everything'],[5,10],BALANCE.achievementRewards.bonusTypes),
+ ...make('helmetSaves','bonuses',['Второй шанс','Second chance'],[1],BALANCE.achievementRewards.helmetSaves),
+ ...make('runs','journey',['Ещё один забег','One more run'],[10,50,150,500],BALANCE.achievementRewards.runs),
+ ...make('ownedPicks','journey',['Арсенал шахтёра','Miner’s arsenal'],[3,5,7],BALANCE.achievementRewards.ownedPicks),
+ ...make('relics','journey',['Искатель древностей','Relic hunter'],[1,10,50],BALANCE.achievementRewards.relics),
 ];
 const descriptions:Record<Metric,Record<Lang,(n:number)=>string>>={
  bestDepth:{ru:n=>`Достичь глубины ${n} м в бесконечной шахте.`,en:n=>`Reach ${n} m in the endless mine.`},

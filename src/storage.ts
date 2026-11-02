@@ -17,7 +17,9 @@ function migrateDurability(r:Run){
  }
  if(version<3){if(finite(r.hp))r.hp/=2;if(finite(r.hpBonus))r.hpBonus=Math.round(r.hpBonus/2);}
  if(version<4){if(finite(r.hp))r.hp*=2;if(finite(r.hpBonus))r.hpBonus*=2;}
- r.durabilityVersion=4;
+ // Preserve the remaining durability percentage when the gold pick's max durability changes.
+ if(version<5&&r.pick==='gold'){const ratio=PICKS.gold.hp/72.5;if(finite(r.hp))r.hp*=ratio;if(finite(r.hpBonus))r.hpBonus*=ratio;}
+ r.durabilityVersion=5;
 }
 function migrateBlockBalance(r:Run){
  if(r.blockBalanceVersion===1||!Array.isArray(r.blocks))return;
@@ -40,7 +42,7 @@ function migrateHelmet(r:Run){
 }
 export function validRun(r:unknown):r is Run {
  if(!r||typeof r!=='object')return false;const s=r as Run;
- return s.version===1&&s.durabilityVersion===4&&typeof s.id==='string'&&Number.isInteger(s.level)&&s.level>=0&&s.level<LEGACY_LEVEL_COUNT&&s.pick in PICKS&&['none','wave','chain'].includes(s.enchant)
+ return s.version===1&&(s.durabilityVersion===4||s.durabilityVersion===5)&&typeof s.id==='string'&&Number.isInteger(s.level)&&s.level>=0&&s.level<LEGACY_LEVEL_COUNT&&s.pick in PICKS&&['none','wave','chain'].includes(s.enchant)
   &&(s.mode==='endless'?Number.isSafeInteger(s.rows)&&s.rows>=legacyRows(s.level)&&s.rows<=120000:s.mode===undefined||s.mode==='campaign'?s.rows===legacyRows(s.level):false)&&Array.isArray(s.blocks)&&s.blocks.length<=4000
   &&s.blocks.every(b=>b&&Number.isInteger(b.x)&&b.x>=0&&b.x<COLS&&Number.isInteger(b.y)&&b.y>=0&&b.y<s.rows&&Object.hasOwn(BLOCKS,b.type)&&finite(b.hp)&&b.hp>=0&&b.hp<=BLOCKS[b.type as BlockType].hp)
   &&(s.fuses===undefined||Array.isArray(s.fuses)&&s.fuses.length<=40&&s.fuses.every(f=>f&&Number.isInteger(f.x)&&Number.isInteger(f.y)&&finite(f.t)))

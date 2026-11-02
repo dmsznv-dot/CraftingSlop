@@ -12,12 +12,12 @@ test('legacy runs retain their durability percentage and migrate only once',()=>
  p.attempt=campaign;p.endlessAttempt=endless;
  const restored=decodeProgress(JSON.stringify(p));
  assert.ok(restored?.attempt&&restored.endlessAttempt);
- assert.equal(restored.attempt.hp,58);assert.equal(maxDurability(restored.attempt),72.5);
+ assert.equal(restored.attempt.hp,84);assert.equal(maxDurability(restored.attempt),105);
  assert.equal(restored.endlessAttempt.hp,225);assert.equal(maxDurability(restored.endlessAttempt),300);
  assert.equal(restored.endlessAttempt.magnetTime,3);
  const reloaded=decodeProgress(JSON.stringify(restored));
- assert.equal(reloaded?.attempt?.hp,58);assert.equal(reloaded?.endlessAttempt?.hp,225);
- assert.deepEqual(Object.values(PICKS).map(pick=>pick.hp),[50,65,85,72.5,115,155,200]);
+ assert.equal(reloaded?.attempt?.hp,84);assert.equal(reloaded?.endlessAttempt?.hp,225);
+ assert.deepEqual(Object.values(PICKS).map(pick=>pick.hp),[50,65,85,105,115,155,200]);
 });
 
 test('early magnet lasts 1.5 seconds, attracts a block and gravity keeps pulling down',()=>{

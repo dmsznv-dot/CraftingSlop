@@ -1,22 +1,24 @@
+import {BALANCE} from './balance.ts';
 export type Pick = 'wood'|'stone'|'iron'|'gold'|'diamond'|'obsidian'|'netherite';
 export type Enchant = 'none'|'wave'|'chain';
 export type SkillAura='fire'|'lightning'|'enchanted'|'ghost';
-export const SKILL_MAX_LEVEL=5;
+export const SKILL_MAX_LEVEL=BALANCE.skillMaxLevel;
 export function skillStats(aura:SkillAura,level:number){
  const n=Math.max(1,Math.min(SKILL_MAX_LEVEL,Math.floor(level)||1));
- return {uses:[1,2,2,3,3][n-1],duration:aura==='enchanted'?[2,2,2.5,2.5,3][n-1]:[3,3,4,4,5][n-1],radius:[3,3,4,4,5][n-1],speed:aura==='enchanted'&&n===5?1.15:aura==='ghost'&&n===5?1.1:1};
+ const effects=BALANCE.skillEffects;
+ return {uses:effects.uses[n-1],duration:aura==='enchanted'?effects.enchantedDuration[n-1]:effects.duration[n-1],radius:effects.lightningRadius[n-1],speed:aura==='enchanted'?effects.enchantedSpeed[n-1]:aura==='ghost'?effects.ghostSpeed[n-1]:1};
 }
 export type BlockType = 'dirt'|'stone'|'hard'|'gold'|'gem'|'tnt'|'obsidian'|'bedrock'|'coal'|'copper'|'iron'|'emerald'|'ancient'|'double'|'sweep'|'repair'|'relic'|'onehit'|'phase'|'bench'|'drill'|'magnet'|'curse'|'shield'|'coalCharge'|'vein'|'helmet';
 export const TILE=32, COLS=14, WIDTH=COLS*TILE;
 // tier gates which blocks a pick mines properly; soft multiplies damage to dirt and stone.
 export const PICKS:Record<Pick,{nudges:number;hp:number;damage:number;tier:number;soft:number;price:number;color:number}>= {
- wood:{nudges:0,hp:50,damage:1,tier:0,soft:1,price:0,color:0xba8959},
- stone:{nudges:1,hp:65,damage:1.6,tier:1,soft:1,price:40,color:0xabb7b9},
- iron:{nudges:2,hp:85,damage:2.2,tier:2,soft:1,price:200,color:0xcfe4de},
- gold:{nudges:3,hp:72.5,damage:2.6,tier:2,soft:1.5,price:2000,color:0xf4cb64},
- diamond:{nudges:4,hp:115,damage:3.2,tier:3,soft:1,price:12000,color:0x6ce5ca},
- obsidian:{nudges:4,hp:155,damage:4.4,tier:4,soft:1,price:60000,color:0x9e7bbe},
- netherite:{nudges:4,hp:200,damage:5.8,tier:5,soft:1.15,price:220000,color:0x85777d},
+ wood:{nudges:0,hp:50,damage:1,tier:0,soft:1,price:BALANCE.pickPrices.wood,color:0xba8959},
+ stone:{nudges:1,hp:65,damage:1.6,tier:1,soft:1,price:BALANCE.pickPrices.stone,color:0xabb7b9},
+ iron:{nudges:2,hp:85,damage:2.2,tier:2,soft:1,price:BALANCE.pickPrices.iron,color:0xcfe4de},
+ gold:{nudges:3,hp:105,damage:4.2,tier:2,soft:1.65,price:BALANCE.pickPrices.gold,color:0xf4cb64},
+ diamond:{nudges:4,hp:115,damage:3.2,tier:3,soft:1,price:BALANCE.pickPrices.diamond,color:0x6ce5ca},
+ obsidian:{nudges:4,hp:155,damage:4.4,tier:4,soft:1,price:BALANCE.pickPrices.obsidian,color:0x9e7bbe},
+ netherite:{nudges:4,hp:200,damage:5.8,tier:5,soft:1.15,price:BALANCE.pickPrices.netherite,color:0x85777d},
 };
 // hp: blows to break; tier: weakest pick that mines it properly; wear: pick durability per blow; ore: nuggets when mined.
 // A pick below the tier only chips the block (UNDERTIER damage, if chip) and the broken ore crumbles to nothing.
@@ -59,7 +61,7 @@ export interface RunLedger {tnt:number;bonuses:number;oreBlocks:number;helmetSav
 export interface Run {
  achievementStats?:RunCounters;achievementLedger?:RunLedger;
  skillAura?:SkillAura;skillLevel?:number;skillCharges?:number;skillMaxCharges?:number;skillFireTime?:number;skillDrillTime?:number;skillGhostTime?:number;chainActive?:boolean;
- version:1;durabilityVersion?:4;blockBalanceVersion?:1;recordBefore?:number;id:string;level:number;pick:Pick;enchant:Enchant;rows:number;blocks:Block[];
+ version:1;durabilityVersion?:4|5;blockBalanceVersion?:1;recordBefore?:number;id:string;level:number;pick:Pick;enchant:Enchant;rows:number;blocks:Block[];
  mode?:'campaign'|'endless';seed?:number;relics?:number;claimedRelics?:number;oreClaimed?:number;oneHitTime?:number;phaseTime?:number;magnetTime?:number;shieldTime?:number;helmetReady?:boolean;helmetCollected?:boolean;helmetGraceTime?:number;hpBonus?:number;benchUsed?:boolean;benchSpawned?:boolean;
  x:number;y:number;vx:number;vy:number;angle:number;spin:number;hp:number;nudges:number;
  ore:number;doubleLeft:number;time:number;lastNudge:number;lastHit:number;hits:number;status:'ready'|'playing'|'won'|'lost';
@@ -77,7 +79,7 @@ function emit(r:Run,e:RunEvent){
  }
  r.events.push(e);
 }
-const NEXT_PICK:Partial<Record<Pick,Pick>>={wood:'stone',stone:'iron',iron:'diamond',gold:'diamond',diamond:'obsidian',obsidian:'netherite'};
+const NEXT_PICK:Partial<Record<Pick,Pick>>={wood:'stone',stone:'iron',iron:'gold',gold:'diamond',diamond:'obsidian',obsidian:'netherite'};
 export function maxDurability(r:Pick|Run):number {
  const pick=typeof r==='string'?r:r.pick,bonus=typeof r==='string'?0:r.hpBonus??0;
  return PICKS[pick].hp+bonus;
@@ -137,7 +139,7 @@ export function createRun(_level:number,pick:Pick,enchant:Enchant='none',starter
  }
  const bonusRand=random(seed^0x5eb2d91);
  for(const block of blocks){block.type=addEndlessAction(block.type,1,bonusRand,block.y);block.hp=BLOCKS[block.type].hp;}
- const run:Run={version:1,durabilityVersion:4,blockBalanceVersion:1,id:crypto.randomUUID(),level:0,pick,enchant,rows:12,blocks,x:224,y:64,vx:18,vy:0,angle:-.5,spin:3.8,
+ const run:Run={version:1,durabilityVersion:5,blockBalanceVersion:1,id:crypto.randomUUID(),level:0,pick,enchant,rows:12,blocks,x:224,y:64,vx:18,vy:0,angle:-.5,spin:3.8,
   hp:PICKS[pick].hp,nudges:PICKS[pick].nudges,ore:0,doubleLeft:0,time:0,lastNudge:-10,lastHit:-10,hits:0,status:'ready',starter,starterPlaced:false,events:[],contacts:{},fuses:[],seed,mode:'endless',relics:0,claimedRelics:0,oneHitTime:0,phaseTime:0};
  ensureSurface(run);extendEndlessMine(run);return run;
 }
@@ -269,6 +271,7 @@ export function collectBlock(r:Run,b:Block,drop=true,cascade:BonusCascade={drill
   emit(r,{type:'bonus',x:b.x*TILE+16,y:b.y*TILE+16,kind:b.type,value:damage});return;
  }
  if(b.type==='bench'){
+  if(r.benchUsed)return;
   const next=NEXT_PICK[r.pick];
   if(next){r.hp+=PICKS[next].hp-PICKS[r.pick].hp;r.pick=next;r.nudges=PICKS[next].nudges;}
   else{const extra=Math.round(PICKS[r.pick].hp*.5);r.hp+=extra;r.hpBonus=(r.hpBonus??0)+extra;}

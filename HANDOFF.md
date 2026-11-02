@@ -83,7 +83,7 @@
 - Цены: каменная 40, железная 200, золотая 2000, алмазная 12000, обсидиановая 60000, незеритовая 220000. Ауры сейчас выбираются бесплатно; цены/покупка аур отложены пользователем.
 - Базовая прочность: 50 / 65 / 85 / 72,5 / 115 / 155 / 200. Земля снимает 1 за удар, камень 2. Восстановление +1, фаза/магнит по 3 с, один удар 5 с, щит 5 с.
 - Каска: хранится без лечения при подборе, один раз восстанавливает 25% базовой прочности при смертельном износе, больше не появляется в этом забеге. Щит, каска и денежная жила редкие, вес 0,08.
-- 47 достижений, общая награда 102500 наггетов (последнее увеличение ×10); получение вручную, повторная выплата ранее полученных не предусмотрена. События — core.ts, прогресс и выдача — achievements.ts, меню — main.ts.
+- Историческая заметка 28.10: для 47 достижений указывалась сумма 102500 наггетов. Поздняя сверка фактического массива обнаружила сумму 95500; новые выплаты перечислены в `docs/ACHIEVEMENTS.md` и централизованы в `src/balance.ts`.
 - Снимки двух режимов и новые поля мигрируются через storage.ts. Не сбрасывать кошелёк, достижения или попытки при дальнейших изменениях. Пользовательские игровые сохранения не включать в Git.
 - Критично для следующего агента: npm test сейчас 44/45, деревянная кирка не проходит шахты 42 и 45 (проверены все 14 точек). Тест прекращается на 42-й, существующий CI/Pages будет заблокирован этим провалом. Тест не ослаблялся, баланс карт не менялся в задаче отправки.
 - Достижения 750/1000 м пока не подтверждены. В 90 автозабегах незеритовой киркой лучший результат 728 м. Снижение целей до 700 м обсуждалось, но не применялось. Не считать их проверенно достижимыми.
@@ -234,3 +234,31 @@ npm run package
 - Молния ищет пересечение поля с прямоугольником руды, создаёт событие skill для визуального эффекта и не расходует заряд при пустой области.
 
 - Для достижения 100 м чаще появляются ранние буры (вес 1,5); обычная земля/камень снимают у каменной и более сильных кирок 0,5/1 прочности за удар. Параметры, цены и длительность бонусов не менялись.
+# Economy/progression pass — 2026-11-02
+
+- Canonical editable values are in `src/balance.ts`; pick pricing, shop item pricing, paid skill levels, and achievement rewards are centralized there.
+- Skill unlock is now a separate paid action from free aura equip. Existing purchased skill levels retain their values and incur no retroactive cost.
+- `docs/ECONOMY.md` records actual simulation conditions, observed haul/depth distribution, and limitations. The short-sample gold result needs a follow-up check after the durability buff; it is not evidence of the tuned outcome until that rerun completes.
+- `scripts/economy-sim.mjs` reruns deterministic balance samples. Use the bundled Node 24 executable; the system Node 20 cannot import these TypeScript files directly.
+- Browser checks use a fresh profile on 5174, never the user's active 5173 save. No GitHub push or deployment was performed.
+
+# Workbench tier fix — 2026-11-02
+
+- Workbench progression follows the shop's full pick order, including iron → gold → diamond; it cannot upgrade twice in one run.
+- Unit coverage checks every tier transition, second-use prevention, and the final +50% durability reward. `npm test` currently passes 79/79.
+
+## 2026-11-02 — HUD до старта
+
+`render()` скрывает контейнеры `#hp` и `#ore` при `r.status === ready`. При старте они показываются. По прямому запросу владельца локальный прогресс на 5173 сброшен; чистое сохранение подтверждено после повторной загрузки. Временный код сброса и проверки удалён.
+
+## 2026-11-02 — ранние награды
+
+По отзыву владельца первые достижения слишком быстро открывали все способности. Начальные ступени наград уменьшены примерно на 20%, поздние награды и цены сохранены. Общий фонд 49 630. Миграция не требуется: старые полученные награды не списываются, новые выплаты читаются из BALANCE.
+
+## 2026-11-02 — бренд в шапке
+
+Логотипы `src/assets/logo-ru.svg` и `logo-en.svg` — белые копии присланных владельцем shaft-Artboard-1-copy.svg / shaft-Artboard-1.svg. Геометрия сохранена, viewBox обрезан по границам рисунка. `render()` выбирает SVG и название вкладки по p.lang; прежняя иконка гор в brand убрана. Размеры — в конце mine-buttons.css.
+
+## 2026-11-02 — отправка актуальной версии
+
+Текущий снимок подготовлен для origin/main, ZIP исходников создаётся через git archive из того же коммита. Локальный ROADMAP.md, снимки проверок и архив экспорта спрайтов не включаются в Git. Ранее помеченная «не отправлена» переработка экономики входит в этот снимок.

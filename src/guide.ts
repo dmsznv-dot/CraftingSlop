@@ -41,3 +41,31 @@ export const guideCopy={
  ru:{how:'Как играть?',atlas:'Атлас блоков',back:'Назад',intro:'Спускайся как можно глубже, добывай руду и улучшай кирку.',steps:[['Начало','Коснись верхней части шахты, чтобы выбрать место спуска, затем нажми кнопку с киркой.'],['Во время спуска','Кирка падает и добывает блоки сама. Стрелки или кнопки ← и → дают толчок; число толчков зависит от кирки.'],['Способности','Выбери зачарование в мастерской. В забеге нажми центральную кнопку или E, чтобы применить способность.'],['Прочность и добыча','Удары изнашивают кирку. Наггеты за добытую руду сохраняются; улучшай кирки и зачарования в мастерской.'],['Достижения','В меню с кубком можно забрать награды за выполненные достижения.']]},
  en:{how:'How to play?',atlas:'Block atlas',back:'Back',intro:'Dig as deep as you can, collect ore and upgrade your pick.',steps:[['Start','Tap the top of the mine to choose a drop point, then press the pick button.'],['During a run','The pick falls and mines automatically. Use the arrow buttons or ← and → to nudge it; the number of nudges depends on the pick.'],['Abilities','Choose an enchantment in the workshop. During a run, press the center button or E to use its ability.'],['Durability and mining','Impacts wear down your pick. Nuggets from mined ore are saved; upgrade picks and enchantments in the workshop.'],['Achievements','Open the trophy menu to claim rewards for completed achievements.']]},
 };
+
+type CreditEntry={name:string;author:string;license:string;url:string;note?:Copy};
+export const creditsCopy={
+ ru:{title:'Об авторах',back:'Назад',intro:'Благодарим авторов музыки и звуковых материалов, использованных в игре.',music:'Музыка',required:'Лицензии с обязательным указанием автора',other:'Другие звуковые ассеты'},
+ en:{title:'Credits',back:'Back',intro:'Thank you to the creators of the music and sound assets used in the game.',music:'Music',required:'Assets requiring attribution',other:'Other sound assets'},
+};
+export const creditsGroups:{title:keyof typeof creditsCopy.ru;entries:CreditEntry[]}[]=[
+ {title:'music',entries:[
+  {name:'Medieval: The Old Tower Inn',author:'RandomMind',license:'CC0',url:'https://opengameart.org/content/medieval-the-old-tower-inn'},
+  {name:"Medieval: The Bard's Tale",author:'RandomMind',license:'CC0',url:'https://opengameart.org/content/medieval-the-bards-tale'},
+  {name:'Medieval: Minstrel Dance',author:'RandomMind',license:'CC0',url:'https://opengameart.org/content/medieval-minstrel-dance'},
+ ]},
+ {title:'required',entries:[
+  {name:'Spell 4 (fire)',author:'Bart K.',license:'CC-BY 3.0',url:'https://opengameart.org/content/spell-4-fire',note:{ru:'Обрезан для быстрого воспроизведения.',en:'Trimmed for faster playback.'}},
+  {name:'LevelUp Sound Atmospheric',author:'copyc4t',license:'CC-BY 3.0',url:'https://opengameart.org/content/levelup-sound-atmospheric'},
+ ]},
+ {title:'other',entries:[
+  {name:'Earth Element Magic Spell',author:'qubodup',license:'CC0',url:'https://opengameart.org/content/earth-element-magic-spell'},
+  {name:'Teleport Spell',author:'Ogrebane',license:'CC0',url:'https://opengameart.org/content/teleport-spell'},
+  {name:'Different steps on wood, stone, leaves, gravel and mud',author:'TinyWorlds',license:'CC0',url:'https://opengameart.org/content/different-steps-on-wood-stone-leaves-gravel-and-mud'},
+  {name:'Minecraft pop',author:'mdeliushussain',license:'CC0',url:'https://freesound.org/people/mdeliushussain/sounds/688737/'},
+  {name:'Impact Sounds',author:'Kenney',license:'CC0',url:'https://kenney.nl/assets/impact-sounds'},
+  {name:'AHHHH',author:'random_intruder',license:'CC0',url:'https://freesound.org/people/random_intruder/sounds/392172/'},
+  {name:'Hammer hitting an anvil',author:'draftcraft',license:'CC0',url:'https://freesound.org/people/draftcraft/sounds/434339/'},
+  {name:'Complex Movements Whoosh 5',author:'floraphonic',license:'Pixabay Content License',url:'https://pixabay.com/sound-effects/film-special-effects-complex-movements-whoosh-5-239355/'},
+  {name:'Electric Discharge',author:'DRAGON-STUDIO',license:'Pixabay Content License',url:'https://pixabay.com/nl/sound-effects/film-en-speciale-effecten-electric-discharge-386160/'},
+ ]},
+];
